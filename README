@@ -1,0 +1,17 @@
+EZTV site scraper for torrents
+------------------------------
+
+Description:
+   Automatically fetch the latest torrent files for shows from EZTV.
+
+Dependency:
+   Python3
+
+Setup:
+   1. Copy the sample shows.db file to the folder where torrents files will be
+   saved.
+   2. Update the shows.db file by adding the shows of your liking.
+
+Run:
+   1. Update the destination folder in run.sh
+   2. execute run.sh
