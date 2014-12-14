@@ -1,12 +1,16 @@
 from HTMLParserForLinks import HTMLParserForLinks
 import logging 
 import re 
+import urllib.parse
 import webIO
 
 
-SITE_URL = "https://eztv.it"
-SHOWLIST_URL = "https://eztv.it/showlist/"
+logger = logging.getLogger(__name__)
 
+#SITE_URL = "https://eztv.it"
+SITE_URL = "https://eztv-proxy.net"
+#SHOWLIST_URL = "https://eztv.it/showlist/"
+SHOWLIST_URL = "https://eztv-proxy.net/showlist/"
 
 EP_DATE = "episodeDay"
 EP_LINK = "episodeLink"
@@ -21,13 +25,22 @@ MAGNET_LINK = "magnet"
 TORRENT_FILE_LINK = "torrent"
 
 
-def parseEpisodeTitle(titleData):
-    logger = logging.getLogger(
-            "{0}.{1}.{2}".format("__main__", __name__, "parseEpisodeTitle"))
+def parse_episode_title(title):
+    """Parses episode title for information stored in dictionary.
+
+    Input:
+        title
+
+    Output:
+        episodeInfo as dictionary
+
+    Raises:
+        None
+    """
     titleInfo = dict()
-    titleData = titleData.lower()
-    matches = re.findall("s\d\de\d\d|\d+x\d+", titleData)
-    if len(matches) > 0:
+    title = title.lower()
+    matches = re.findall("s\d\de\d\d|\d+x\d+", title)
+    if matches:
         episodeID = matches[0].strip('s')
         tokens = []
         if episodeID.find('x') != -1:
@@ -39,8 +52,8 @@ def parseEpisodeTitle(titleData):
         titleInfo[SEASON_NUMBER] = int(tokens[0])
         titleInfo[EP_NUMBER] = int(tokens[1])
     else:
-        matches = re.findall("\d\d\d\d \d\d \d\d", titleData)
-        if len(matches) > 0:
+        matches = re.findall("\d\d\d\d \d\d \d\d", title)
+        if matches:
             episodeDate = matches[0].split()
             titleInfo[EP_YEAR] = int(episodeDate[0])
             titleInfo[EP_MONTH] = int(episodeDate[1])
@@ -48,20 +61,27 @@ def parseEpisodeTitle(titleData):
         else:
             return None
 
-    matches = re.findall("\d+p|\d+i", titleData)
-    if len(matches) > 0:
-        quality = matches[0]
-        titleInfo[VIDEO_RES_QUALITY] = quality
+    matches = re.findall("\d+p|\d+i", title)
+    if matches:
+        titleInfo[VIDEO_RES_QUALITY] = matches[0]
     else:
         titleInfo[VIDEO_RES_QUALITY] = None
 
-    logger.debug("{0},{1}".format(titleData, titleInfo))
     return titleInfo
 
-def parseShowlistPage(pageUrl):
-    logger = logging.getLogger(
-            "{0}.{1}.{2}".format("__main__", __name__, "parseShowlistPage"))
-    pageContent = webIO.fetchWebpage(pageUrl)
+def parse_showlist_page(pageUrl):
+    """Parses showlist page.
+
+    Input:
+        URL of page
+
+    Output:
+        showName:ShowURL as dictionary
+
+    Raises:
+        None
+    """
+    pageContent = webIO.fetch_webpage(pageUrl)
     parser = HTMLParserForLinks()
     parser.parse(pageContent)
     showLinks = dict()
@@ -72,32 +92,54 @@ def parseShowlistPage(pageUrl):
                 showLinks[link.data] = link.attributes["href"]
     return showLinks
 
-def parseShowPage(pageUrl):
-    logger = logging.getLogger(
-            "{0}.{1}.{2}".format("__main__", __name__, "parseShowPage"))
-    pageContent = webIO.fetchWebpage(pageUrl)
+def parse_show_page(pageUrl):
+    """Parses showpage.
+
+    Input:
+        URL of page
+
+    Output:
+        episodes as list
+        count of unparsed episodes
+
+    Raises:
+        None
+    """
+    pageContent = webIO.fetch_webpage(pageUrl)
     parser = HTMLParserForLinks()
     parser.parse(pageContent)
     showEpisodes = []
+    missedCount = 0
     for link in reversed(parser.links):
         if link and link.data and link.attributes:
             if ("class" in link.attributes
                     and link.attributes['class'] == "epinfo"):
-                episodeTitleInfo = parseEpisodeTitle(link.data)
-                if episodeTitleInfo == None:
-                    logger.debug(
-                            "Can't find episode ID in {0}".format(link.data))
-                else:
+                episodeTitleInfo = parse_episode_title(link.data)
+                if episodeTitleInfo:
                     episodeTitleInfo[TORRENT_TITLE] = link.data
                     episodeTitleInfo[EP_LINK] = link.attributes["href"]
+                    logger.debug("{0},{1}".format(link.data, episodeTitleInfo))
                     showEpisodes.append(episodeTitleInfo)
-                    
-    return showEpisodes
+                else:
+                    missedCount += 1
+                    logger.debug(
+                            "Can't find episode ID in {0}".format(link.data))
+ 
+    return showEpisodes, missedCount
 
-def parseEpisodePage(pageUrl):
-    logger = logging.getLogger(
-            "{0}.{1}.{2}".format("__main__", __name__, "parseEpisodePage"))
-    pageContent = webIO.fetchWebpage(pageUrl)
+def parse_episode_page(pageUrl):
+    """Parses episode page.
+
+    Input:
+        URL of page
+
+    Output:
+        dictionary of magnet and torrent links
+
+    Raises:
+        None
+    """
+    pageContent = webIO.fetch_webpage(pageUrl)
     parser = HTMLParserForLinks()
     parser.parse(pageContent)
     magnetLink = None
@@ -113,20 +155,21 @@ def parseEpisodePage(pageUrl):
 
 
 if __name__ == "__main__":
-    showLinks = parseShowlistPage(SHOWLIST_URL)
+    showLinks = parse_showlist_page(SHOWLIST_URL)
     showCounter = 0
     for show in showLinks.keys():
         showCounter += 1
-        print(showCounter, show, showLinks[show])
-        showEpisodes = parseShowPage("{0}{1}".format(SITE_URL, showLinks[show]))
+        showPage = urllib.parse.urljoin(SITE_URL, showLinks[show])
+        showEpisodes, unparsedCount = parse_show_page(showPage)
+        print(showCounter, show, showLinks[show], showPage, unparsedCount)
         episodeCounter = 0
         for episode in showEpisodes:
             episodeCounter += 1
-            print(episodeCounter, episode)
-            episodeTorrentLinks = parseEpisodePage(
-                    "{0}{1}".format(SITE_URL,episode[EP_LINK]))
+            epPage = urllib.parse.urljoin(SITE_URL, episode[EP_LINK])
+            print(episodeCounter, episode, epPage)
+            episodeTorrentLinks = parse_episode_page(epPage)
             print(episodeTorrentLinks)
-            if episodeCounter > 3:
+            if episodeCounter > 2:
                 break
-        if showCounter > 3:
+        if showCounter > 2:
             break

@@ -2,65 +2,130 @@ import logging
 
 
 MODE_DAILY = "Daily"
-MODE_EPISODAL = "Episodal"
-TIME_UNKNOWN = "Time Unknown"
+MODE_WEEKLY = "Weekly"
+
+logger = logging.getLogger(__name__)
 
 
 class Show:
-    def __init__(
-            self, showName, showMode, seasonNumber=-1, episodeNumber=-1,
-            episodeYear=-1, episodeMonth=-1, episodeDate=-1,
-            updateTime=TIME_UNKNOWN):
+    """Object for show information"""
+    def __init__(self, showName):
         self.name = showName
-        self.showMode = showMode
-        self.seasonNumber = int(seasonNumber)
-        self.episodeNumber = int(episodeNumber)
-        self.updateTime = updateTime
-        self.episodeYear = int(episodeYear)
-        self.episodeMonth = int(episodeMonth)
-        self.episodeDate = int(episodeDate)
+        self.mode = None
+        self.year = -1
+        self.month = -1
+        self.day = -1
+        self.season = -1
+        self.episode = -1
+        self.lastUpdateTime = None
 
-def convertTextToShows(lines):
-    logger = logging.getLogger(
-            "{0}.{1}.{2}".format("__main__", __name__, "convertTextToShows"))
+    def set_daily_info(self, year, month, day):
+        """Sets the date and mode of daily show.
+
+        Input:
+            year, month, day
+
+        Output:
+            None
+
+        Raises:
+            None
+        """
+        self.mode = MODE_DAILY
+        self.year = int(year)
+        self.month = int(month)
+        self.day = int(day)
+
+    def set_weekly_info(self, season, episode):
+        """Sets the season, episode and mode of weekly show.
+
+        Input:
+            season, episode
+
+        Output:
+            None
+
+        Raises:
+            None
+        """
+        self.mode = MODE_WEEKLY
+        self.season = int(season)
+        self.episode = int(episode)
+
+    def set_last_update_time(self, time):
+        """Sets the last update time.
+
+        Input:
+            time
+
+        Output:
+            None
+
+        Raises:
+            None
+        """
+        self.lastUpdateTime = time
+
+
+def convert_text_to_shows(lines):
+    """Converts lines in shows.db to Show objects.
+
+    Input:
+        list of lines from shows.db
+
+    output:
+        list of Show objects
+
+    Raises:
+        None
+
+    """
     shows = []
     for line in lines:
         line = line.strip()
         logger.debug(line)
-        tokens = line.split('%')
-        name = str.strip(tokens[0])
-        modeData = str.strip(tokens[1]).split('_')
-        time = str.strip(tokens[2])
-        if modeData[0] == MODE_DAILY:
-            dateTokens = modeData[1].split('-')
-            shows.append(
-                    Show(name, modeData[0], episodeYear=dateTokens[0],
-                        episodeMonth=dateTokens[1], episodeDate=dateTokens[2],
-                        updateTime=time))
-        elif modeData[0] == MODE_EPISODAL:
-            episodeTokens = modeData[1].split(',')
-            seasonNumber = episodeTokens[0]
-            episodeNumber = episodeTokens[1]
-            shows.append(
-                    Show(name, modeData[0], seasonNumber=seasonNumber,
-                        episodeNumber=episodeNumber, updateTime=time))
+        name, modeData, time = [token.strip() for token in line.split('%')]
+        mode, epData = modeData.split('_')
+        show = Show(name)
+        show.set_last_update_time(time)
+        if mode == MODE_DAILY:
+            year, month, day = epData.split('-')
+            show.set_daily_info(year, month, day)
+        elif mode == MODE_WEEKLY:
+            season, episode = epData.split(',')
+            show.set_weekly_info(season, episode)
         else:
             logger.info("Ignoring show with unknown mode: {0}".format(line))
+            continue
+        shows.append(show)
     return shows
 
-def convertShowsToText(shows):
-    logger = logging.getLogger(
-            "{0}.{1}.{2}".format("__main__", __name__, "convertShowsToText"))
+def convert_shows_to_text(shows):
+    """Converts list of Show objects to lines for serialization.
+
+    Input:
+        list of Shows
+
+    output:
+        list of string of serialized Show objects.
+
+    Raises:
+        None
+
+    """
     lines = []
     for show in shows:
-        if show.showMode == MODE_DAILY:
+        if show.mode == MODE_DAILY:
             line = "{0} % {1}_{2}-{3}-{4} % {5}".format(
-                    show.name, MODE_DAILY, show.episodeYear, show.episodeMonth,
-                    show.episodeDate, show.updateTime)
+                        show.name, MODE_DAILY, show.year,
+                        show.month, show.day, show.lastUpdateTime
+                    )
             lines.append(line)
         else:
-            line = "{0} % {1}_{2},{3} % {4}".format(show.name, MODE_EPISODAL,
-                    show.seasonNumber, show.episodeNumber,  show.updateTime)
+            line = "{0} % {1}_{2},{3} % {4}".format(
+                        show.name, MODE_WEEKLY, show.season,
+                        show.episode,  show.lastUpdateTime
+                    )
             lines.append(line)
         logger.debug(lines[-1])
     return lines
@@ -68,11 +133,12 @@ def convertShowsToText(shows):
 
 if __name__ == "__main__":
     lines = [
-            "fes % Episodal_12,12 % Time Unknown",
-            "fes2 % Daily_2010-01-29 % Time Unknown"
+                "fes % Weekly_12,12 % Time Unknown",
+                "fes2 % Daily_2010-01-29 % Time Unknown"
             ]
     print(lines)
-    shows = convertTextToShows(lines)
-    newLines = convertShowsToText(shows)
+    shows = convert_text_to_shows(lines)
+    print(shows)
+    newLines = convert_shows_to_text(shows)
     print(newLines)
 

@@ -2,13 +2,23 @@ import logging
 import urllib.error
 import urllib.request
 
+logger = logging.getLogger(__name__)
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; rv:27.3) Gecko/20130101 Firefox/27.3"
 
 
-def fetchURL(url):
-    logger = logging.getLogger(
-            "{0}.{1}.{2}".format("__main__", __name__, "fetchWebpage"))
+def fetch_URL(url):
+    """Fetches the URL using firefox 27 user-agent.
+
+    Input:
+        URL
+
+    Output:
+        URL content as bytes.
+
+    Raises:
+        None
+    """
     headers = {"User-Agent":USER_AGENT}
     pageRequest = urllib.request.Request(url, headers=headers)
     try:
@@ -22,16 +32,40 @@ def fetchURL(url):
     else:
         return pageResponse.read()
 
-def fetchWebpage(url):
-    return fetchURL(url).decode("utf-8")
+def fetch_webpage(url):
+    """Fetches the webpage at URL.
 
-def fetchData(url):
-    return fetchURL(url)
+    Input:
+        URL
+
+    Output:
+        URL content as string.
+
+    Raises:
+        None
+    """
+    data = fetch_URL(url)
+    if data:
+        return data.decode("utf-8")
+
+def fetch_data(url):
+    """Fetches the data at URL.
+
+    Input:
+        URL
+
+    Output:
+        URL content as bytes.
+
+    Raises:
+        None
+    """
+    return fetch_URL(url)
 
 
 if __name__ == "__main__":
     url = "http://www.google.com"
-    webpage = fetchWebpage(url)
+    webpage = fetch_webpage(url)
     print(webpage)
-    data = fetchData(url)
+    data = fetch_data(url)
     print(data)
