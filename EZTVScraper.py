@@ -7,10 +7,10 @@ import webIO
 
 logger = logging.getLogger(__name__)
 
-#SITE_URL = "https://eztv.it"
-SITE_URL = "https://eztv-proxy.net"
-#SHOWLIST_URL = "https://eztv.it/showlist/"
-SHOWLIST_URL = "https://eztv-proxy.net/showlist/"
+SITE_URL = "https://eztv.it"
+#SITE_URL = "https://eztv-proxy.net"
+SHOWLIST_URL = "https://eztv.it/showlist/"
+#SHOWLIST_URL = "https://eztv-proxy.net/showlist/"
 
 EP_DATE = "episodeDay"
 EP_LINK = "episodeLink"

@@ -34,7 +34,7 @@ def get_latest_torrents(shows):
         logger.debug("URL for show page -> {0}".format(pageLink))
         episodes, unknownEpisodes = EZTVScraper.parse_show_page(pageLink)
         if unknownEpisodes > 0:
-            logger.info("Found {0} unknown episodes for {1}".format(
+            logger.info("Found {0} unknown episodes of {1}".format(
                 unknownEpisodes, show.name
             ))
         if show.mode == dataHandler.MODE_WEEKLY:
@@ -307,7 +307,7 @@ if __name__ == "__main__":
     getTorrents = arguments.downloadTorrent
     getMagnets = arguments.downloadMagnet
 
-    initialize_logger(rootDir)
+    initialize_logger()
 
     if getTorrents or getMagnets:
         create_directories()

@@ -24,10 +24,12 @@ def fetch_URL(url):
     try:
         pageResponse = urllib.request.urlopen(pageRequest)
     except urllib.error.HTTPError as error:
-        logger.error("Unable to reach showlist page with error ", error.code)
+        logger.error("Unable to access {0}: HTTP error code {1}".format(
+                        url, error.code
+                    ))
         return None
     except urllib.error.URLError as error:
-        logger.error("Unable to reach showlist page. Reason: ", error.reason)
+        logger.error("Unable to read {0}: Reason {1}".format(url, error.reason))
         return None
     else:
         return pageResponse.read()
