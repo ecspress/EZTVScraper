@@ -82,6 +82,10 @@ def parse_showlist_page(pageUrl):
         None
     """
     pageContent = webIO.fetch_webpage(pageUrl)
+
+    if not pageContent:
+        return None
+
     parser = HTMLParserForLinks()
     parser.parse(pageContent)
     showLinks = dict()
@@ -106,6 +110,10 @@ def parse_show_page(pageUrl):
         None
     """
     pageContent = webIO.fetch_webpage(pageUrl)
+
+    if not pageContent:
+        return None, None
+
     parser = HTMLParserForLinks()
     parser.parse(pageContent)
     showEpisodes = []
@@ -140,6 +148,10 @@ def parse_episode_page(pageUrl):
         None
     """
     pageContent = webIO.fetch_webpage(pageUrl)
+
+    if not pageContent:
+        return None
+
     parser = HTMLParserForLinks()
     parser.parse(pageContent)
     magnetLink = None

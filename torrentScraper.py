@@ -29,10 +29,18 @@ def get_latest_torrents(shows):
     """
     fetchedCount = 0
     showLinks = EZTVScraper.parse_showlist_page(EZTVScraper.SHOWLIST_URL)
+
+    if not showLinks:
+        return
+
     for show in shows:
         pageLink = urlparse.urljoin(EZTVScraper.SITE_URL, showLinks[show.name])
         logger.debug("URL for show page -> {0}".format(pageLink))
         episodes, unknownEpisodes = EZTVScraper.parse_show_page(pageLink)
+
+        if not episodes:
+            continue
+
         if unknownEpisodes > 0:
             logger.info("Found {0} unknown episodes of {1}".format(
                 unknownEpisodes, show.name
@@ -185,6 +193,9 @@ def download_torrent(name, episode):
 
     epUrl = urlparse.urljoin(EZTVScraper.SITE_URL, episode[EZTVScraper.EP_LINK])
     epLinks = EZTVScraper.parse_episode_page(epUrl)
+
+    if not epLinks:
+        return False
 
     if getTorrents:
         torrentFolder = os.path.join(rootDir, "torrents")
