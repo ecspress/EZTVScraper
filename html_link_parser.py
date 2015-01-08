@@ -1,3 +1,4 @@
+"""Parses and finds all the links in an html document"""
 from html.parser import HTMLParser
 
 
@@ -22,7 +23,7 @@ class Link:
         """
         self.data = data
 
-    def add_attribute(self, attributeName, attributeValue):
+    def add_attribute(self, attribute_name, attribute_value):
         """Stores the attributes of <a> tag in a dictionary.
 
         Input:
@@ -34,14 +35,16 @@ class Link:
         Raises:
             None
         """
-        self.attributes[attributeName] = attributeValue
+        self.attributes[attribute_name] = attribute_value
 
 
-class HTMLParserForLinks(HTMLParser):
+class HTMLLinkParser(HTMLParser):
     """Parses <a> tags in HTML"""
 
     def __init__(self):
         HTMLParser.__init__(self)
+        self.links = []
+        self.current_link = None
 
     def parse(self, data):
         """Initializes and resets the parser.
@@ -56,7 +59,7 @@ class HTMLParserForLinks(HTMLParser):
             None
         """
         self.links = []
-        self.currentLink = None
+        self.current_link = None
         self.reset()
         self.feed(data)
 
@@ -73,9 +76,9 @@ class HTMLParserForLinks(HTMLParser):
             None
         """
         if tag == "a":
-            self.currentLink = Link()
+            self.current_link = Link()
             for attribute in attrs:
-                self.currentLink.add_attribute(attribute[0], attribute[1])
+                self.current_link.add_attribute(attribute[0], attribute[1])
 
     def handle_endtag(self, tag):
         """Handles the end of a tag.
@@ -90,8 +93,8 @@ class HTMLParserForLinks(HTMLParser):
             None
         """
         if tag == "a":
-            self.links.append(self.currentLink)
-            self.currentLink = None
+            self.links.append(self.current_link)
+            self.current_link = None
 
     def handle_data(self, data):
         """Handles the text of a tag.
@@ -105,13 +108,16 @@ class HTMLParserForLinks(HTMLParser):
         Raises:
             None
         """
-        if self.currentLink:
-            self.currentLink.add_data(data)
+        if self.current_link:
+            self.current_link.add_data(data)
 
-
-if __name__ == "__main__":
-    parser = HTMLParserForLinks()
+def test_main():
+    """Tests the current module"""
+    parser = HTMLLinkParser()
     parser.parse('<fes>some text</fes><a href="www"><t>,</t>linkkkk</a>')
     for link in parser.links:
         print(link.attributes, link.data)
 
+
+if __name__ == "__main__":
+    test_main()

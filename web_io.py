@@ -1,13 +1,15 @@
+"""Fetches url data"""
+
 import logging
 import urllib.error
 import urllib.request
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; rv:27.3) Gecko/20130101 Firefox/27.3"
 
 
-def fetch_URL(url):
+def fetch_url(url):
     """Fetches the URL using firefox 27 user-agent.
 
     Input:
@@ -20,19 +22,17 @@ def fetch_URL(url):
         None
     """
     headers = {"User-Agent":USER_AGENT}
-    pageRequest = urllib.request.Request(url, headers=headers)
+    page_request = urllib.request.Request(url, headers=headers)
     try:
-        pageResponse = urllib.request.urlopen(pageRequest)
+        page_response = urllib.request.urlopen(page_request)
     except urllib.error.HTTPError as error:
-        logger.error("Unable to access {0}: HTTP error code {1}".format(
-                        url, error.code
-                    ))
+        LOGGER.error("Unable to access %s: HTTP error code %d", url, error.code)
         return None
     except urllib.error.URLError as error:
-        logger.error("Unable to read {0}: Reason {1}".format(url, error.reason))
+        LOGGER.error("Unable to read %s: Reason %s", url, error.reason)
         return None
     else:
-        return pageResponse.read()
+        return page_response.read()
 
 def fetch_webpage(url):
     """Fetches the webpage at URL.
@@ -41,14 +41,14 @@ def fetch_webpage(url):
         URL
 
     Output:
-        URL content as string.
+        URL content as utf-8 string.
 
     Raises:
         None
     """
-    data = fetch_URL(url)
-    if data:
-        return data.decode("utf-8")
+    data_bytes = fetch_url(url)
+    if data_bytes:
+        return data_bytes.decode("utf-8")
 
 def fetch_data(url):
     """Fetches the data at URL.
@@ -62,12 +62,16 @@ def fetch_data(url):
     Raises:
         None
     """
-    return fetch_URL(url)
+    return fetch_url(url)
+
+def test_main():
+    """Tests the current module"""
+    link = "http://www.google.com"
+    webpage = fetch_webpage(link)
+    print(webpage)
+    data = fetch_data(link)
+    print(data)
 
 
 if __name__ == "__main__":
-    url = "http://www.google.com"
-    webpage = fetch_webpage(url)
-    print(webpage)
-    data = fetch_data(url)
-    print(data)
+    test_main()
