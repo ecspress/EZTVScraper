@@ -9,8 +9,8 @@ import web_io
 
 LOGGER = logging.getLogger(__name__)
 
-SITE_URL = "https://eztv.it"
-SHOWLIST_URL = "https://eztv.it/showlist/"
+SITE_URL = "https://eztv.ch"
+SHOWLIST_URL = "https://eztv.ch/showlist/"
 #SITE_URL = "https://eztv-proxy.net"
 #SHOWLIST_URL = "https://eztv-proxy.net/showlist/"
 

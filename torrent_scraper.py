@@ -77,7 +77,7 @@ def fetch_by_episode(show, episodes, download_arguments):
             elif comparison_value == 1:
                 LOGGER.info("Found season %d for %s when last episode was -> S%dE%d",
                             episode[eztv_scraper.SEASON_NUMBER], show.name,
-                            show.seasonNumber, show.episodeNumber)
+                            show.season, show.episode)
                 show.season = episode[eztv_scraper.SEASON_NUMBER]
 
             if download_torrent(show.name, episode, download_arguments):
@@ -166,7 +166,7 @@ def download_torrent(name, episode, download_arguments):
     if get_torrents:
         torrent_folder = os.path.join(dest_dir, "torrents")
         for link in ep_links[eztv_scraper.TORRENT_FILE_LINK]:
-            LOGGER.debug(link)
+            LOGGER.debug("Downloading torrent -> %s", link)
             data = web_io.fetch_data(link)
             if data and b'<title>Blocked URL</title>' not in data:
                 file_path = os.path.join(torrent_folder,
