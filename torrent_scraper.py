@@ -10,9 +10,6 @@ import os
 import urllib.parse as urlparse
 import web_io
 
-#DEST_DIR = None
-#GET_MAGNETS = None
-#GET_TORRENTS = None
 LOGGER = logging.getLogger(__name__)
 
 def get_latest_torrents(shows, download_arguments):
@@ -123,9 +120,9 @@ def fetch_by_date(show, episodes, download_arguments):
                     LOGGER.info("Downloaded torrent -> %s", episode[eztv_scraper.TORRENT_TITLE])
                     fetched_count += 1
                     found_new_torrent = True
-                    show.date = "{0}-{1}-{2}".format(episode[eztv_scraper.EP_DATE],
+                    show.date = "{0}-{1}-{2}".format(episode[eztv_scraper.EP_YEAR],
                                                      episode[eztv_scraper.EP_MONTH],
-                                                     episode[eztv_scraper.EP_YEAR])
+                                                     episode[eztv_scraper.EP_DATE])
                 else:
                     LOGGER.info("Could not download torrent -> %s",
                                 episode[eztv_scraper.TORRENT_TITLE])
@@ -264,32 +261,35 @@ def create_directories(get_torrents, get_magnets, dest_dir):
 
 def main():
     """Starts executing current module"""
-    argument_parser = argparse.ArgumentParser()
-    argument_parser.add_argument("dest", help="Specify directory of shows.db")
-    argument_parser.add_argument("--magnet", dest="downloadMagnet", action="store_true",
-                                 default=False, help="Enables magnet link download")
-    argument_parser.add_argument("--torrent", dest="downloadTorrent", action="store_true",
-                                 default=False, help="Enables torrent file download")
+    try:
+        argument_parser = argparse.ArgumentParser()
+        argument_parser.add_argument("dest", help="Specify directory of shows.db")
+        argument_parser.add_argument("--magnet", dest="downloadMagnet", action="store_true",
+                                     default=False, help="Enables magnet link download")
+        argument_parser.add_argument("--torrent", dest="downloadTorrent", action="store_true",
+                                     default=False, help="Enables torrent file download")
 
-    arguments = argument_parser.parse_args()
-    dest_dir = arguments.dest
-    get_torrents = arguments.downloadTorrent
-    get_magnets = arguments.downloadMagnet
+        arguments = argument_parser.parse_args()
+        dest_dir = arguments.dest
+        get_torrents = arguments.downloadTorrent
+        get_magnets = arguments.downloadMagnet
 
-    download_arguments = (get_torrents, get_magnets, dest_dir)
+        download_arguments = (get_torrents, get_magnets, dest_dir)
 
-    initialize_logger(dest_dir)
+        initialize_logger(dest_dir)
 
-    if get_torrents or get_magnets:
-        create_directories(get_torrents, get_magnets, dest_dir)
-        show_file = os.path.join(dest_dir, "shows.db")
-        show_data = file_io.read_file(show_file)
-        shows = data_handler.convert_text_to_shows(show_data)
-        get_latest_torrents(shows, download_arguments)
-        show_data = data_handler.convert_shows_to_text(shows)
-        file_io.write_file(show_file, "w", show_data)
-    else:
-        LOGGER.info("Must enable torrent or magnet link option")
+        if get_torrents or get_magnets:
+            create_directories(get_torrents, get_magnets, dest_dir)
+            show_file = os.path.join(dest_dir, "shows.db")
+            show_data = file_io.read_file(show_file)
+            shows = data_handler.convert_text_to_shows(show_data)
+            get_latest_torrents(shows, download_arguments)
+            show_data = data_handler.convert_shows_to_text(shows)
+            file_io.write_file(show_file, "w", show_data)
+        else:
+            LOGGER.info("Must enable torrent or magnet link option")
+    except KeyboardInterrupt:
+        print("Exit keyboard combo detected: Exiting....")
 
 
 if __name__ == "__main__":

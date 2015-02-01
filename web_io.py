@@ -26,10 +26,10 @@ def fetch_url(url):
     try:
         page_response = urllib.request.urlopen(page_request)
     except urllib.error.HTTPError as error:
-        LOGGER.error("Unable to access %s: HTTP error code %d", url, error.code)
+        LOGGER.debug("Unable to access %s: HTTP error code %d", url, error.code)
         return None
     except urllib.error.URLError as error:
-        LOGGER.error("Unable to read %s: Reason %s", url, error.reason)
+        LOGGER.debug("Unable to read %s: Reason %s", url, error.reason)
         return None
     else:
         return page_response.read()

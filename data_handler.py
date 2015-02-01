@@ -88,7 +88,7 @@ def convert_text_to_shows(lines):
         if mode == MODE_DAILY:
             show.set_daily_info(ep_data)
         elif mode == MODE_WEEKLY:
-            season, episode = ep_data.split(',')
+            season, episode = ep_data.split('-')
             show.set_weekly_info(season, episode)
         else:
             LOGGER.info("Ignoring show with unknown mode: %s", line)
@@ -116,7 +116,7 @@ def convert_shows_to_text(shows):
                                                 show.last_updated)
             lines.append(line)
         else:
-            line = "{0} % {1}_{2},{3} % {4}".format(show.name, MODE_WEEKLY, show.season,
+            line = "{0} % {1}_{2}-{3} % {4}".format(show.name, MODE_WEEKLY, show.season,
                                                     show.episode, show.last_updated)
             lines.append(line)
         LOGGER.debug(lines[-1])
@@ -124,7 +124,7 @@ def convert_shows_to_text(shows):
 
 def test_main():
     """Tests the current module"""
-    lines = ["fes % Weekly_12,12 % Time Unknown", "fes2 % Daily_2010-01-29 % Time Unknown"]
+    lines = ["fes % Weekly_12-12 % Time Unknown", "fes2 % Daily_2010-01-29 % Time Unknown"]
     print(lines)
     shows = convert_text_to_shows(lines)
     print(shows)
