@@ -21,10 +21,13 @@ def fetch_url(url):
     Raises:
         None
     """
-    headers = {"User-Agent":USER_AGENT}
-    page_request = urllib.request.Request(url, headers=headers)
     try:
+        headers = {"User-Agent":USER_AGENT}
+        page_request = urllib.request.Request(url, headers=headers)
         page_response = urllib.request.urlopen(page_request)
+    except ValueError as error:
+        LOGGER.debug("Invalid url %s", url)
+        return None
     except urllib.error.HTTPError as error:
         LOGGER.debug("Unable to access %s: HTTP error code %d", url, error.code)
         return None
