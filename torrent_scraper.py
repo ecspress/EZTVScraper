@@ -82,8 +82,6 @@ def fetch_by_episode(show, episodes, download_arguments):
                 fetched_count += 1
                 found_new_torrent = True
                 show.episode = episode[eztv_scraper.EP_NUMBER]
-            else:
-                LOGGER.info("Could not download torrent -> %s", episode[eztv_scraper.TORRENT_TITLE])
         else:
             LOGGER.debug("Skipping high def torrents -> %s", episode[eztv_scraper.TORRENT_TITLE])
 
@@ -123,9 +121,6 @@ def fetch_by_date(show, episodes, download_arguments):
                     show.date = "{0}-{1}-{2}".format(episode[eztv_scraper.EP_YEAR],
                                                      episode[eztv_scraper.EP_MONTH],
                                                      episode[eztv_scraper.EP_DATE])
-                else:
-                    LOGGER.info("Could not download torrent -> %s",
-                                episode[eztv_scraper.TORRENT_TITLE])
             else:
                 LOGGER.debug("Skipping previous episodes -> %s",
                              episode[eztv_scraper.TORRENT_TITLE])
@@ -151,36 +146,40 @@ def download_torrent(name, episode, download_arguments):
     Raises:
         None
     """
-    downloaded = False
+    downloaded_torrent = False
+    downloaded_magnet = False
     get_torrents, get_magnets, dest_dir = download_arguments
 
     ep_url = urlparse.urljoin(eztv_scraper.SITE_URL, episode[eztv_scraper.EP_LINK])
     ep_links = eztv_scraper.parse_episode_page(ep_url)
 
-    if not ep_links:
-        return False
-
     if get_torrents:
-        torrent_folder = os.path.join(dest_dir, "torrents")
-        for link in ep_links[eztv_scraper.TORRENT_FILE_LINK]:
-            LOGGER.debug("Downloading torrent -> %s", link)
-            data = web_io.fetch_data(link)
-            if data and b'<title>Blocked URL</title>' not in data:
-                file_path = os.path.join(torrent_folder,
-                                         episode[eztv_scraper.TORRENT_TITLE] + ".torrent")
-                if file_io.write_file(file_path, 'wb', data=data):
-                    downloaded = True
-                    break
+        if ep_links[eztv_scraper.TORRENT_FILE_LINK]:
+            torrent_folder = os.path.join(dest_dir, "torrents")
+            for link in ep_links[eztv_scraper.TORRENT_FILE_LINK]:
+                LOGGER.debug("Downloading torrent -> %s", link)
+                data = web_io.fetch_data(link)
+                if data and b'<title>Blocked URL</title>' not in data:
+                    file_path = os.path.join(torrent_folder,
+                                             episode[eztv_scraper.TORRENT_TITLE] + ".torrent")
+                    if file_io.write_file(file_path, 'wb', data=data):
+                        downloaded_torrent = True
+                        break
+
+        if not downloaded_torrent:
+            LOGGER.info("Could not download torrent -> %s", episode[eztv_scraper.TORRENT_TITLE])
 
     if get_magnets:
-        folder = os.path.join(dest_dir, "magnets")
-        magnet_file = os.path.join(folder, name)
-        link = ep_links[eztv_scraper.MAGNET_LINK]
-        LOGGER.debug(link)
-        downloaded = file_io.write_file(magnet_file, 'a',
-                                        [episode[eztv_scraper.TORRENT_TITLE], link])
+        if ep_links[eztv_scraper.MAGNET_LINK]:
+            magnet_file = os.path.join(dest_dir, "magnets", name)
+            link = ep_links[eztv_scraper.MAGNET_LINK]
+            LOGGER.debug(link)
+            downloaded_magnet = file_io.write_file(magnet_file,
+                                                   'a', [episode[eztv_scraper.TORRENT_TITLE], link])
+        if not downloaded_magnet:
+            LOGGER.info("Could not download magnet -> %s", episode[eztv_scraper.TORRENT_TITLE])
 
-    return downloaded
+    return downloaded_magnet or downloaded_torrent
 
 def compare_episodes(season_1, episode_1, season_2, episode_2):
     """Compares two episodes of a weekly show.
